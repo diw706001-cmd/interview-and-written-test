@@ -1,0 +1,14 @@
+node_modules
+.git
+.gitignore
+data
+deploy/certs
+test
+*.md
+!README.md
+.env
+.env.production
+.env.local
+smoke_out.log
+smoke_err.log
+.DS_Store

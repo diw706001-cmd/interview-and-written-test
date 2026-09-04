@@ -1,0 +1,25 @@
+node_modules/
+pnpm-lock.yaml.bak
+package-lock.json
+
+# 环境变量与密钥（绝不入库）
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# 证书与密钥
+deploy/certs/
+*.pem
+*.key
+
+# 运行时数据
+data/
+smoke_out.log
+smoke_err.log
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

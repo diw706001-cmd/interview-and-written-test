@@ -1,0 +1,20 @@
+[Unit]
+Description=HR Dynamic Form Engine
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/hr-form
+EnvironmentFile=/opt/hr-form/.env.demo
+ExecStart=/usr/bin/node /opt/hr-form/server.js
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=15
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hr-form
+
+[Install]
+WantedBy=multi-user.target

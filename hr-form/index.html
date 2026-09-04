@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HR 动态表单与通用接口引擎</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --line: #d8dee9;
+      --text: #182033;
+      --muted: #5f6b7a;
+      --primary: #2457ff;
+      --primary-weak: #e8efff;
+      --warn: #8a4b00;
+      --warn-bg: #fff4e8;
+      --ok: #096b39;
+      --ok-bg: #e9f8ef;
+      --danger: #b42318;
+      --danger-bg: #fdecec;
+      --shadow: 0 8px 30px rgba(18, 33, 64, 0.08);
+      --radius: 10px;
+      --radius-sm: 8px;
+      --font: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: linear-gradient(180deg, #f7f9fc 0%, #eef3fb 100%);
+      color: var(--text);
+    }
+    .app {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+    aside {
+      border-right: 1px solid var(--line);
+      background: rgba(255,255,255,0.82);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+    }
+    main { padding: 22px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 26px; line-height: 1.2; letter-spacing: 0; }
+    h2 { font-size: 18px; margin-bottom: 12px; }
+    h3 { font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+    .muted { color: var(--muted); }
+    .stack { display: grid; gap: 14px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .panel-pad { padding: 16px; }
+    .hero {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--primary-weak);
+      color: var(--primary);
+      border: 1px solid #cfdcff;
+    }
+    .chip.neutral { background: #f2f4f7; color: #344054; border-color: #e4e7ec; }
+    .grid-2 { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      background: #fff;
+    }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .col { display: grid; gap: 8px; }
+    label { font-size: 13px; color: #334155; }
+    input, select, textarea, button {
+      font: inherit;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+    }
+    textarea { min-height: 96px; resize: vertical; }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid rgba(36, 87, 255, 0.16);
+      border-color: var(--primary);
+    }
+    .btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-secondary { background: #eef2f7; color: var(--text); }
+    .btn-danger { background: #fef3f2; color: var(--danger); }
+    .btn-primary:hover { filter: brightness(0.97); }
+    .btn-secondary:hover { background: #e8edf5; }
+    .btn-danger:hover { background: #fde8e6; }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab {
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #344054;
+    }
+    .tab.active {
+      color: var(--primary);
+      border-color: #bfd0ff;
+      background: var(--primary-weak);
+    }
+    .view { display: none; }
+    .view.active { display: block; }
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .error {
+      font-size: 12px;
+      color: var(--danger);
+    }
+    .notice {
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-size: 13px;
+    }
+    .notice.warn { background: var(--warn-bg); color: var(--warn); border-color: #ffd8ad; }
+    .notice.ok { background: var(--ok-bg); color: var(--ok); border-color: #beeecf; }
+    .notice.info { background: #eef4ff; color: #2742b2; border-color: #c9d8ff; }
+    pre {
+      margin: 0;
+      overflow: auto;
+      background: #0f172a;
+      color: #dbeafe;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      overflow: hidden;
+    }
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      padding: 10px 8px;
+      vertical-align: top;
+    }
+    th { color: #475467; font-size: 12px; }
+    .small { font-size: 12px; }
+    .sidebar-block + .sidebar-block { margin-top: 16px; }
+    .version-list { display: grid; gap: 8px; }
+    .version-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      cursor: pointer;
+    }
+    .version-item.active {
+      border-color: #bfd0ff;
+      background: var(--primary-weak);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #f2f4f7;
+      color: #344054;
+      font-size: 12px;
+    }
+    .badge.success { background: var(--ok-bg); color: var(--ok); }
+    .badge.danger { background: var(--danger-bg); color: var(--danger); }
+    .badge.primary { background: var(--primary-weak); color: var(--primary); }
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 16px;
+      align-items: start;
+    }
+    .table-wrap { overflow: auto; }
+    .audit-list { display: grid; gap: 10px; }
+    .audit-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+    .footer-note {
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 1fr; }
+      aside { position: relative; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .grid-2, .split { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="stack">
+        <div>
+          <h1>HR 动态表单</h1>
+          <p class="muted" style="margin-top:10px;">Schema 驱动、版本化、可扩展的通用接口引擎。</p>
+        </div>
+
+        <div class="sidebar-block card">
+          <h3>表单版本</h3>
+          <div class="version-list" id="versionList"></div>
+        </div>
+
+        <div class="sidebar-block card">
+          <h3>能力摘要</h3>
+          <div class="stack small">
+            <div>Schema 驱动渲染</div>
+            <div>动态联动与规则引擎</div>
+            <div>提交、查询、过滤、审计</div>
+            <div>上传安全、并发控制、插件钩子</div>
+          </div>
+        </div>
+
+        <div class="sidebar-block card">
+          <h3>面试交付定位</h3>
+          <p class="small muted">这份答案把题目拆成“Schema、渲染、API、版本、审计、扩展”六个层次，适合作为平台型系统设计题的标准作答。</p>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <section class="hero">
+        <div class="chips">
+          <span class="chip">Schema</span>
+          <span class="chip">Rule Engine</span>
+          <span class="chip">Versioning</span>
+          <span class="chip">Audit Log</span>
+          <span class="chip">Hook System</span>
+        </div>
+        <h1>HR 动态表单与通用接口引擎</h1>
+        <p class="muted">一套可以直接拿去讲的笔试答案，同时带一个可交互的最小原型。</p>
+      </section>
+
+      <div class="tabs" style="margin-bottom:14px;">
+        <button class="tab active" data-tab="preview">表单预览</button>
+        <button class="tab" data-tab="schema">Schema</button>
+        <button class="tab" data-tab="api">API 设计</button>
+        <button class="tab" data-tab="version">版本管理</button>
+        <button class="tab" data-tab="audit">审计日志</button>
+      </div>
+
+      <section class="view active" id="preview">
+        <div class="grid-2">
+          <div class="panel panel-pad">
+            <div class="row" style="justify-content:space-between; margin-bottom:14px;">
+              <div>
+                <h2 id="formTitle">技术岗入职信息表</h2>
+                <p class="muted small" id="formMeta">formId: tech_onboarding · version: 4</p>
+              </div>
+              <span class="badge primary" id="schemaStatus">Published</span>
+            </div>
+            <form id="dynamicForm"></form>
+            <div class="btns">
+              <button type="button" class="btn-primary" id="submitBtn">提交</button>
+              <button type="button" class="btn-secondary" id="resetBtn">重置</button>
+            </div>
+            <div id="formNotice" style="margin-top:12px;"></div>
+          </div>
+
+          <div class="stack">
+            <div class="panel panel-pad">
+              <h2>联动规则</h2>
+              <div class="notice info" id="rulePreview">
+                选择“是否应届生 = 是”时，前公司名称隐藏且取消必填；期望薪资 > 30000 时出现 HRBP 审批提示。
+              </div>
+            </div>
+            <div class="panel panel-pad">
+              <h2>提交结果</h2>
+              <pre id="submissionJson">{}</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="schema">
+        <div class="panel panel-pad">
+          <h2>Schema 设计</h2>
+          <div class="notice warn" style="margin-bottom:14px;">Schema 不直接修改，发布后生成新版本；历史提交绑定旧版本。</div>
+          <pre id="schemaJson"></pre>
+        </div>
+      </section>
+
+      <section class="view" id="api">
+        <div class="split">
+          <div class="panel panel-pad">
+            <h2>通用 API</h2>
+            <table>
+              <thead>
+                <tr><th>方法</th><th>路径</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>POST</td><td><code>/api/v1/dynamic-data/:formId</code></td><td>提交表单，按最新发布版校验并入库</td></tr>
+                <tr><td>GET</td><td><code>/api/v1/dynamic-data/:formId</code></td><td>按 JSON 字段分页、筛选、排序</td></tr>
+                <tr><td>GET</td><td><code>/api/v1/forms/:formId/schema</code></td><td>读取当前发布版 Schema</td></tr>
+                <tr><td>POST</td><td><code>/api/v1/forms/:formId/schema/publish</code></td><td>发布新版本</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="stack">
+            <div class="panel panel-pad">
+              <h2>文件上传</h2>
+              <p class="muted small">文件不直接写入 Submission JSON，只存 fileId / storageKey / hash。</p>
+            </div>
+            <div class="panel panel-pad">
+              <h2>扩展机制</h2>
+              <p class="muted small">通过 hook 处理通知、PDF、第三方同步等后置动作。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="version">
+        <div class="grid-2">
+          <div class="panel panel-pad">
+            <h2>版本策略</h2>
+            <div class="stack small">
+              <div>已发布 Schema 不可直接修改。</div>
+              <div>改动生成新版本，并保留 parentVersion。</div>
+              <div>历史 Submission 永久绑定旧版本。</div>
+              <div>新 Submission 永远使用最新 Published Version。</div>
+            </div>
+          </div>
+          <div class="panel panel-pad">
+            <h2>并发控制</h2>
+            <div class="notice info">保存时带 version / ETag，若版本不一致则拒绝写入，避免 B 覆盖 A。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="audit">
+        <div class="panel panel-pad">
+          <h2>审计日志</h2>
+          <div id="auditList" class="audit-list"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const schemas = [
+      {
+        version: 3,
+        status: "Published",
+        note: "旧版本：没有 department 字段，employeeName 仍在使用。",
+        formId: "tech_onboarding",
+        title: "技术岗入职信息表",
+        fields: [
+          { key: "employeeName", label: "姓名", type: "input", required: true, validation: { minLength: 2 } },
+          { key: "isFreshGraduate", label: "是否应届生", type: "select", required: true, options: [{ label: "是", value: "yes" }, { label: "否", value: "no" }] },
+          { key: "previousCompany", label: "前公司名称", type: "input", visibleWhen: { field: "isFreshGraduate", notEquals: "yes" }, requiredWhen: { field: "isFreshGraduate", notEquals: "yes" } },
+          { key: "expectedSalary", label: "期望薪资", type: "input", required: true, validation: { min: 0 } },
+          { key: "skills", label: "技能栈", type: "repeater", itemLabel: "技能项", itemFields: [
+            { key: "skillName", label: "技能名称", type: "input", required: true },
+            { key: "level", label: "熟练度", type: "select", required: true, options: [{ label: "初级", value: "初级" }, { label: "中级", value: "中级" }, { label: "高级", value: "高级" }] }
+          ] }
+        ]
+      },
+      {
+        version: 4,
+        status: "Published",
+        note: "当前版本：employeeName 改为 fullName，新增 department，保留历史兼容。",
+        formId: "tech_onboarding",
+        title: "技术岗入职信息表",
+        fields: [
+          { key: "fullName", label: "姓名", type: "input", required: true, validation: { minLength: 2 } },
+          { key: "department", label: "部门", type: "select", required: true, options: [{ label: "研发", value: "rd" }, { label: "测试", value: "qa" }, { label: "产品", value: "product" }, { label: "设计", value: "design" }] },
+          { key: "email", label: "邮箱", type: "input", required: true, validation: { email: true } },
+          { key: "isFreshGraduate", label: "是否应届生", type: "select", required: true, options: [{ label: "是", value: "yes" }, { label: "否", value: "no" }] },
+          { key: "previousCompany", label: "前公司名称", type: "input", visibleWhen: { field: "isFreshGraduate", notEquals: "yes" }, requiredWhen: { field: "isFreshGraduate", notEquals: "yes" } },
+          { key: "expectedSalary", label: "期望薪资", type: "input", required: true, validation: { min: 0 } },
+          { key: "idCard", label: "身份证附件", type: "upload", required: true, accept: ["image/png", "image/jpeg", "application/pdf"], maxSizeMB: 10 },
+          { key: "skills", label: "技能栈", type: "repeater", itemLabel: "技能项", itemFields: [
+            { key: "skillName", label: "技能名称", type: "input", required: true },
+            { key: "level", label: "熟练度", type: "select", required: true, options: [{ label: "初级", value: "初级" }, { label: "中级", value: "中级" }, { label: "高级", value: "高级" }] }
+          ] }
+        ]
+      }
+    ];
+
+    const auditEvents = [
+      { time: "2026-08-20 10:12", actor: "HR Admin", action: "发布 schema v4", detail: "employeeName -> fullName，新增 department" },
+      { time: "2026-08-20 10:31", actor: "System", action: "触发 hook", detail: "提交后同步候选人到第三方考勤系统" },
+      { time: "2026-08-20 11:02", actor: "HRBP", action: "修改 salary", detail: "30000 -> 35000" }
+    ];
+
+    let activeVersion = schemas.length;
+    let formState = {};
+    let repeaterRows = [{ skillName: "", level: "初级" }];
+    let currentAudit = [...auditEvents];
+    const apiToken = window.localStorage.getItem("hr_demo_token") || "";
+    const serverMode = window.location.protocol !== "file:";
+
+    const versionList = document.getElementById("versionList");
+    const dynamicForm = document.getElementById("dynamicForm");
+    const schemaJson = document.getElementById("schemaJson");
+    const submissionJson = document.getElementById("submissionJson");
+    const formNotice = document.getElementById("formNotice");
+    const formTitle = document.getElementById("formTitle");
+    const formMeta = document.getElementById("formMeta");
+    const schemaStatus = document.getElementById("schemaStatus");
+    const auditList = document.getElementById("auditList");
+    const rulePreview = document.getElementById("rulePreview");
+
+    function currentSchema() { return schemas[activeVersion - 1]; }
+
+    function renderVersionList() {
+      versionList.innerHTML = "";
+      schemas.forEach((schema, idx) => {
+        const item = document.createElement("div");
+        item.className = "version-item" + (idx === activeVersion - 1 ? " active" : "");
+        item.innerHTML = `
+          <div>
+            <div><strong>v${schema.version}</strong></div>
+            <div class="small muted">${schema.note}</div>
+          </div>
+          <span class="badge ${idx === activeVersion - 1 ? 'primary' : 'neutral'}">${schema.status}</span>
+        `;
+        item.onclick = () => {
+          activeVersion = idx + 1;
+          formState = {};
+          repeaterRows = [{ skillName: "", level: "初级" }];
+          renderAll();
+        };
+        versionList.appendChild(item);
+      });
+    }
+
+    function visible(field) {
+      if (field.visibleWhen) {
+        if (field.visibleWhen.equals !== undefined) return formState[field.visibleWhen.field] === field.visibleWhen.equals;
+        if (field.visibleWhen.notEquals !== undefined) return formState[field.visibleWhen.field] !== field.visibleWhen.notEquals;
+      }
+      return true;
+    }
+
+    function required(field) {
+      if (field.required) return true;
+      if (field.requiredWhen) {
+        const current = formState[field.requiredWhen.field];
+        if (field.requiredWhen.equals !== undefined) return current === field.requiredWhen.equals;
+        if (field.requiredWhen.notEquals !== undefined) return current !== field.requiredWhen.notEquals;
+      }
+      return false;
+    }
+
+    function validateField(field, value) {
+      if (!visible(field)) return "";
+      if (required(field) && (value === undefined || value === null || value === "")) return "这是必填项";
+      if (field.validation?.minLength && String(value || "").length < field.validation.minLength) return `至少 ${field.validation.minLength} 个字符`;
+      if (field.validation?.regex) {
+        const reg = new RegExp(field.validation.regex);
+        if (!reg.test(String(value || ""))) return "格式不匹配";
+      }
+      if (field.validation?.email) {
+        const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
+        if (!ok) return "邮箱格式不正确";
+      }
+      if (field.validation?.min !== undefined && Number(value) < field.validation.min) return `不能小于 ${field.validation.min}`;
+      if (field.validation?.max !== undefined && Number(value) > field.validation.max) return `不能大于 ${field.validation.max}`;
+      return "";
+    }
+
+    function renderField(field) {
+      if (!visible(field)) return "";
+      const value = formState[field.key] ?? "";
+      const requiredMark = required(field) ? " *" : "";
+      const error = validateField(field, value);
+      if (field.type === "select") {
+        return `
+          <div class="field">
+            <label for="${field.key}">${field.label}${requiredMark}</label>
+            <select id="${field.key}" data-key="${field.key}">
+              <option value="">请选择</option>
+              ${field.options.map(o => {
+                const optionValue = typeof o === "string" ? o : o.value;
+                const optionLabel = typeof o === "string" ? o : o.label;
+                return `<option value="${optionValue}" ${value === optionValue ? "selected" : ""}>${optionLabel}</option>`;
+              }).join("")}
+            </select>
+            ${field.key === "expectedSalary" ? `<div class="hint">${Number(value) > 30000 ? "需要 HRBP 特别审批" : "超过 30000 时会自动提示特别审批"}</div>` : ""}
+            ${error ? `<div class="error">${error}</div>` : ""}
+          </div>
+        `;
+      }
+      if (field.type === "upload") {
+        return `
+          <div class="field">
+            <label for="${field.key}">${field.label}${requiredMark}</label>
+            <input id="${field.key}" data-file-key="${field.key}" type="file" accept=".png,.jpg,.jpeg,.pdf" />
+            <input data-key="${field.key}" type="hidden" value="${value}" />
+            <div class="hint" id="${field.key}Hint">${value ? `已选择文件引用：${value}` : "文件会先上传到文件服务，Submission 只保存 fileId。"}</div>
+            ${error ? `<div class="error">${error}</div>` : ""}
+          </div>
+        `;
+      }
+      if (field.type === "repeater") {
+        return `
+          <div class="field">
+            <label>${field.label}</label>
+            <div class="stack" id="repeaterWrap"></div>
+            <div class="btns">
+              <button type="button" class="btn-secondary" id="addRowBtn">添加一项</button>
+              <button type="button" class="btn-secondary" id="removeRowBtn">删除末项</button>
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div class="field">
+          <label for="${field.key}">${field.label}${requiredMark}</label>
+          <input id="${field.key}" data-key="${field.key}" value="${value}" placeholder="请输入${field.label}" />
+          ${field.key === "expectedSalary" ? `<div class="hint">${Number(value) > 30000 ? "需要 HRBP 特别审批" : "超过 30000 时会自动提示特别审批"}</div>` : ""}
+          ${error ? `<div class="error">${error}</div>` : ""}
+        </div>
+      `;
+    }
+
+    function renderRepeater() {
+      const wrap = document.getElementById("repeaterWrap");
+      if (!wrap) return;
+      wrap.innerHTML = repeaterRows.map((row, idx) => `
+        <div class="panel panel-pad" style="box-shadow:none;">
+          <div class="row" style="justify-content:space-between; margin-bottom:10px;">
+            <strong>技能项 ${idx + 1}</strong>
+            <span class="badge neutral">repeater</span>
+          </div>
+          <div class="field">
+            <label>技能名称 *</label>
+            <input data-repeat-key="skillName" data-row="${idx}" value="${row.skillName}" />
+          </div>
+          <div class="field">
+            <label>熟练度 *</label>
+            <select data-repeat-key="level" data-row="${idx}">
+              ${["初级","中级","高级"].map(o => `<option value="${o}" ${row.level === o ? "selected" : ""}>${o}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+      `).join("");
+
+      wrap.querySelectorAll("input[data-repeat-key], select[data-repeat-key]").forEach(el => {
+        el.addEventListener("input", handleRepeaterChange);
+        el.addEventListener("change", handleRepeaterChange);
+      });
+
+      const add = document.getElementById("addRowBtn");
+      const remove = document.getElementById("removeRowBtn");
+      if (add) add.onclick = () => {
+        repeaterRows.push({ skillName: "", level: "初级" });
+        renderAll();
+      };
+      if (remove) remove.onclick = () => {
+        if (repeaterRows.length > 1) repeaterRows.pop();
+        renderAll();
+      };
+    }
+
+    function handleRepeaterChange(e) {
+      const row = Number(e.target.dataset.row);
+      const key = e.target.dataset.repeatKey;
+      repeaterRows[row][key] = e.target.value;
+      formState.skills = repeaterRows;
+      updateRuleHint();
+    }
+
+    function bindFieldEvents() {
+      dynamicForm.querySelectorAll("[data-key]").forEach(el => {
+        const key = el.dataset.key;
+        el.addEventListener("input", () => {
+          formState[key] = el.value;
+          updateRuleHint();
+          if (key === "isFreshGraduate" || key === "expectedSalary") renderAll(true);
+        });
+        el.addEventListener("change", () => {
+          formState[key] = el.value;
+          updateRuleHint();
+          if (key === "isFreshGraduate" || key === "expectedSalary") renderAll(true);
+        });
+      });
+      dynamicForm.querySelectorAll("[data-file-key]").forEach(el => {
+        el.addEventListener("change", () => uploadSelectedFile(el));
+      });
+    }
+
+    async function uploadSelectedFile(input) {
+      const file = input.files?.[0];
+      if (!file) return;
+      const key = input.dataset.fileKey;
+      const hint = document.getElementById(`${key}Hint`);
+      try {
+        hint.textContent = "正在上传并校验文件...";
+        if (!serverMode) {
+          formState[key] = `demo_${file.name}`;
+          dynamicForm.querySelector(`[data-key="${key}"]`).value = formState[key];
+          hint.textContent = `离线演示引用：${formState[key]}`;
+          return;
+        }
+        const initResponse = await fetch("/api/v1/files/init", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${apiToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ originalName: file.name, mimeType: file.type || "application/octet-stream", sizeBytes: file.size })
+        });
+        const initResult = await initResponse.json();
+        if (!initResponse.ok) throw new Error(initResult.message || "文件初始化失败");
+        const uploadResponse = await fetch(initResult.uploadUrl, {
+          method: "PUT",
+          headers: { "Authorization": `Bearer ${apiToken}`, "Content-Type": file.type },
+          body: await file.arrayBuffer()
+        });
+        const uploadResult = await uploadResponse.json();
+        if (!uploadResponse.ok) throw new Error(uploadResult.message || "文件上传失败");
+        const completeResponse = await fetch(`/api/v1/files/${initResult.fileId}`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${apiToken}`, "Content-Type": "application/json" },
+          body: "{}"
+        });
+        const completeResult = await completeResponse.json();
+        if (!completeResponse.ok) throw new Error(completeResult.message || "文件完成失败");
+        formState[key] = completeResult.file.fileId;
+        dynamicForm.querySelector(`[data-key="${key}"]`).value = formState[key];
+        hint.textContent = `上传完成：${formState[key]}`;
+      } catch (error) {
+        formState[key] = "";
+        dynamicForm.querySelector(`[data-key="${key}"]`).value = "";
+        hint.textContent = error.message;
+        formNotice.innerHTML = `<div class="notice warn">文件上传失败：${error.message}</div>`;
+      }
+    }
+
+    function updateRuleHint() {
+      const showCompany = formState.isFreshGraduate !== "yes";
+      const salary = Number(formState.expectedSalary || 0);
+      const messages = [];
+      messages.push(showCompany ? "前公司名称字段显示且可必填。" : "前公司名称字段隐藏，且不参与必填。");
+      if (salary > 30000) messages.push("期望薪资已超过 30000，触发 HRBP 审批提示。");
+      rulePreview.className = "notice " + (salary > 30000 ? "warn" : "info");
+      rulePreview.textContent = messages.join(" ");
+    }
+
+    function renderSchema() {
+      schemaJson.textContent = JSON.stringify(currentSchema(), null, 2);
+    }
+
+    function renderAudit() {
+      auditList.innerHTML = currentAudit.map(ev => `
+        <div class="audit-item">
+          <div class="row" style="justify-content:space-between;">
+            <strong>${ev.action}</strong>
+            <span class="badge neutral">${ev.time}</span>
+          </div>
+          <div class="small muted">${ev.actor}</div>
+          <div>${ev.detail}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderForm() {
+      const schema = currentSchema();
+      formTitle.textContent = schema.title;
+      formMeta.textContent = `formId: ${schema.formId} · version: ${schema.version}`;
+      schemaStatus.textContent = schema.status;
+      schemaStatus.className = "badge primary";
+      dynamicForm.innerHTML = schema.fields.map(renderField).join("");
+      bindFieldEvents();
+      renderRepeater();
+      updateRuleHint();
+    }
+
+    function validateForm() {
+      const schema = currentSchema();
+      const errors = [];
+      const result = {};
+      schema.fields.forEach(field => {
+        if (!visible(field)) return;
+        if (field.type === "repeater") {
+          result[field.key] = repeaterRows.map(row => ({ ...row }));
+          const rowErrors = repeaterRows.some(row => !row.skillName || !row.level);
+          if (rowErrors) errors.push("技能栈至少需要补全一组有效数据");
+          return;
+        }
+        const value = formState[field.key] ?? "";
+        const error = validateField(field, value);
+        if (error) errors.push(`${field.label}: ${error}`);
+        result[field.key] = value;
+      });
+      if (Number(result.expectedSalary || 0) > 30000) {
+        result.hrbpApproval = "required";
+      }
+      return { errors, result };
+    }
+
+    async function submit() {
+      const { errors, result } = validateForm();
+      if (errors.length) {
+        formNotice.innerHTML = `<div class="notice warn">提交失败：${errors.join("；")}</div>`;
+        submissionJson.textContent = JSON.stringify({ ok: false, errors }, null, 2);
+        return;
+      }
+      const payload = {
+        formId: currentSchema().formId,
+        schemaVersion: currentSchema().version,
+        data: result,
+        fileRefs: result.idCard ? [{ fileId: result.idCard }] : []
+      };
+      if (serverMode) {
+        const response = await fetch(`/api/v1/dynamic-data/${currentSchema().formId}`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${apiToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify(result)
+        });
+        const remoteResult = await response.json();
+        if (!response.ok) {
+          formNotice.innerHTML = `<div class="notice warn">服务端校验失败：${(remoteResult.errors || []).map(error => error.message).join("；") || remoteResult.message}</div>`;
+          submissionJson.textContent = JSON.stringify(remoteResult, null, 2);
+          return;
+        }
+        payload.serverResult = remoteResult;
+      }
+      currentAudit = [
+        { time: "2026-09-03 15:20", actor: "System", action: "提交成功", detail: `保存为 schema v${currentSchema().version}` },
+        ...currentAudit
+      ];
+      formNotice.innerHTML = `<div class="notice ok">${serverMode ? "提交成功，服务端已写入 Submission、审计日志并触发 Hook。" : "提交成功，已模拟写入 Submission 和审计日志。"}</div>`;
+      submissionJson.textContent = JSON.stringify(payload, null, 2);
+      renderAudit();
+    }
+
+    function resetForm() {
+      formState = {};
+      repeaterRows = [{ skillName: "", level: "初级" }];
+      formNotice.innerHTML = "";
+      submissionJson.textContent = "{}";
+      renderAll();
+    }
+
+    function renderAll(skipSchema) {
+      renderVersionList();
+      if (!skipSchema) renderSchema();
+      renderForm();
+    }
+
+    document.querySelectorAll(".tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    document.getElementById("submitBtn").addEventListener("click", submit);
+    document.getElementById("resetBtn").addEventListener("click", resetForm);
+
+    renderAll();
+    renderAudit();
+    submissionJson.textContent = JSON.stringify({
+      formId: currentSchema().formId,
+      schemaVersion: currentSchema().version,
+      data: {}
+    }, null, 2);
+  </script>
+</body>
+</html>

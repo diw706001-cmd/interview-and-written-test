@@ -1,0 +1,128 @@
+{
+  "formId": "tech_onboarding",
+  "title": "技术岗入职信息表",
+  "version": 4,
+  "status": "Published",
+  "parentVersion": 3,
+  "aliases": {
+    "employeeName": "fullName"
+  },
+  "fields": [
+    {
+      "key": "fullName",
+      "label": "姓名",
+      "type": "input",
+      "required": true,
+      "defaultValue": "",
+      "validation": {
+        "minLength": 2,
+        "maxLength": 50
+      }
+    },
+    {
+      "key": "department",
+      "label": "部门",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "label": "研发", "value": "rd" },
+        { "label": "测试", "value": "qa" },
+        { "label": "产品", "value": "product" },
+        { "label": "设计", "value": "design" }
+      ]
+    },
+    {
+      "key": "email",
+      "label": "邮箱",
+      "type": "input",
+      "required": true,
+      "validation": {
+        "email": true
+      }
+    },
+    {
+      "key": "isFreshGraduate",
+      "label": "是否应届生",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "label": "是", "value": "yes" },
+        { "label": "否", "value": "no" }
+      ]
+    },
+    {
+      "key": "previousCompany",
+      "label": "前公司名称",
+      "type": "input",
+      "visibleWhen": {
+        "field": "isFreshGraduate",
+        "equals": "no"
+      },
+      "requiredWhen": {
+        "field": "isFreshGraduate",
+        "equals": "no"
+      }
+    },
+    {
+      "key": "expectedSalary",
+      "label": "期望薪资",
+      "type": "input",
+      "required": true,
+      "validation": {
+        "min": 0,
+        "max": 100000
+      },
+      "hintWhen": {
+        "field": "expectedSalary",
+        "operator": ">",
+        "value": 30000,
+        "message": "需要 HRBP 特别审批"
+      }
+    },
+    {
+      "key": "idCard",
+      "label": "身份证附件",
+      "type": "upload",
+      "required": true,
+      "accept": ["image/png", "image/jpeg", "application/pdf"],
+      "maxSizeMB": 10
+    },
+    {
+      "key": "workExperiences",
+      "label": "工作履历",
+      "type": "repeater",
+      "minItems": 0,
+      "maxItems": 10,
+      "itemFields": [
+        {
+          "key": "company",
+          "label": "公司",
+          "type": "input",
+          "required": true
+        },
+        {
+          "key": "position",
+          "label": "岗位",
+          "type": "input",
+          "required": true
+        },
+        {
+          "key": "years",
+          "label": "年限",
+          "type": "input",
+          "required": true,
+          "validation": {
+            "min": 0,
+            "max": 50
+          }
+        }
+      ]
+    }
+  ],
+  "hooks": {
+    "afterSubmit": [
+      "sendDingTalkNotification",
+      "generateContractPdf"
+    ]
+  }
+}
