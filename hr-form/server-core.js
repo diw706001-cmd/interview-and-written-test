@@ -27,7 +27,7 @@ const initialState = {
         { key: "department", label: "部门", type: "select", required: true, options: [{ label: "研发", value: "rd" }, { label: "测试", value: "qa" }] },
         { key: "isFreshGraduate", label: "是否应届生", type: "select", required: true, options: [{ label: "是", value: "yes" }, { label: "否", value: "no" }] },
         { key: "previousCompany", label: "前公司名称", type: "input", visibleWhen: { field: "isFreshGraduate", equals: "no" }, requiredWhen: { field: "isFreshGraduate", equals: "no" } },
-        { key: "expectedSalary", label: "期望薪资", type: "input", required: true, validation: { min: 0, max: 100000 } },
+        { key: "expectedSalary", label: "期望薪资", type: "number", required: true, validation: { min: 0, max: 100000 }, hintWhen: { field: "expectedSalary", operator: ">", value: 30000, message: "需要 HRBP 特别审批", placeholder: "超过 30000 时会自动提示特别审批" } },
       ],
     },
     {
@@ -43,7 +43,7 @@ const initialState = {
         { key: "email", label: "邮箱", type: "input", required: true, validation: { email: true } },
         { key: "isFreshGraduate", label: "是否应届生", type: "select", required: true, options: [{ label: "是", value: "yes" }, { label: "否", value: "no" }] },
         { key: "previousCompany", label: "前公司名称", type: "input", visibleWhen: { field: "isFreshGraduate", equals: "no" }, requiredWhen: { field: "isFreshGraduate", equals: "no" } },
-        { key: "expectedSalary", label: "期望薪资", type: "input", required: true, validation: { min: 0, max: 100000 } },
+        { key: "expectedSalary", label: "期望薪资", type: "number", required: true, validation: { min: 0, max: 100000 }, hintWhen: { field: "expectedSalary", operator: ">", value: 30000, message: "需要 HRBP 特别审批", placeholder: "超过 30000 时会自动提示特别审批" } },
         { key: "idCard", label: "身份证附件", type: "upload", required: true, accept: ["image/png", "image/jpeg", "application/pdf"], maxSizeMB: 10 },
         {
           key: "workExperiences",

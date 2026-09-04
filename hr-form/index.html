@@ -395,7 +395,7 @@
           { key: "employeeName", label: "姓名", type: "input", required: true, validation: { minLength: 2 } },
           { key: "isFreshGraduate", label: "是否应届生", type: "select", required: true, options: [{ label: "是", value: "yes" }, { label: "否", value: "no" }] },
           { key: "previousCompany", label: "前公司名称", type: "input", visibleWhen: { field: "isFreshGraduate", notEquals: "yes" }, requiredWhen: { field: "isFreshGraduate", notEquals: "yes" } },
-          { key: "expectedSalary", label: "期望薪资", type: "input", required: true, validation: { min: 0 } },
+          { key: "expectedSalary", label: "期望薪资", type: "number", required: true, validation: { min: 0 }, hintWhen: { field: "expectedSalary", operator: ">", value: 30000, message: "需要 HRBP 特别审批", placeholder: "超过 30000 时会自动提示特别审批" } },
           { key: "skills", label: "技能栈", type: "repeater", itemLabel: "技能项", itemFields: [
             { key: "skillName", label: "技能名称", type: "input", required: true },
             { key: "level", label: "熟练度", type: "select", required: true, options: [{ label: "初级", value: "初级" }, { label: "中级", value: "中级" }, { label: "高级", value: "高级" }] }
@@ -414,7 +414,7 @@
           { key: "email", label: "邮箱", type: "input", required: true, validation: { email: true } },
           { key: "isFreshGraduate", label: "是否应届生", type: "select", required: true, options: [{ label: "是", value: "yes" }, { label: "否", value: "no" }] },
           { key: "previousCompany", label: "前公司名称", type: "input", visibleWhen: { field: "isFreshGraduate", notEquals: "yes" }, requiredWhen: { field: "isFreshGraduate", notEquals: "yes" } },
-          { key: "expectedSalary", label: "期望薪资", type: "input", required: true, validation: { min: 0 } },
+          { key: "expectedSalary", label: "期望薪资", type: "number", required: true, validation: { min: 0 }, hintWhen: { field: "expectedSalary", operator: ">", value: 30000, message: "需要 HRBP 特别审批", placeholder: "超过 30000 时会自动提示特别审批" } },
           { key: "idCard", label: "身份证附件", type: "upload", required: true, accept: ["image/png", "image/jpeg", "application/pdf"], maxSizeMB: 10 },
           { key: "skills", label: "技能栈", type: "repeater", itemLabel: "技能项", itemFields: [
             { key: "skillName", label: "技能名称", type: "input", required: true },
@@ -507,6 +507,24 @@
       return "";
     }
 
+    function renderHint(field, value) {
+      if (!field.hintWhen) return "";
+      const v = Number(value || 0);
+      const threshold = Number(field.hintWhen.value);
+      const op = field.hintWhen.operator || ">";
+      let matched = false;
+      switch (op) {
+        case ">": matched = v > threshold; break;
+        case ">=": matched = v >= threshold; break;
+        case "<": matched = v < threshold; break;
+        case "<=": matched = v <= threshold; break;
+        case "==": matched = v == threshold; break;
+        case "!=": matched = v != threshold; break;
+      }
+      const text = matched ? field.hintWhen.message : (field.hintWhen.placeholder || "");
+      return text ? `<div class="hint">${text}</div>` : "";
+    }
+
     function renderField(field) {
       if (!visible(field)) return "";
       const value = formState[field.key] ?? "";
@@ -524,7 +542,7 @@
                 return `<option value="${optionValue}" ${value === optionValue ? "selected" : ""}>${optionLabel}</option>`;
               }).join("")}
             </select>
-            ${field.key === "expectedSalary" ? `<div class="hint">${Number(value) > 30000 ? "需要 HRBP 特别审批" : "超过 30000 时会自动提示特别审批"}</div>` : ""}
+            ${renderHint(field, value)}
             ${error ? `<div class="error">${error}</div>` : ""}
           </div>
         `;
@@ -535,7 +553,7 @@
             <label for="${field.key}">${field.label}${requiredMark}</label>
             <input id="${field.key}" data-file-key="${field.key}" type="file" accept=".png,.jpg,.jpeg,.pdf" />
             <input data-key="${field.key}" type="hidden" value="${value}" />
-            <div class="hint" id="${field.key}Hint">${value ? `已选择文件引用：${value}` : "文件会先上传到文件服务，Submission 只保存 fileId。"}</div>
+            <div class="hint" id="${field.key}Hint">${value ? `已选择文件引用：${value}` : "请先上传身份证正反面照片或 PDF，系统仅保存文件引用。"}</div>
             ${error ? `<div class="error">${error}</div>` : ""}
           </div>
         `;
@@ -552,11 +570,21 @@
           </div>
         `;
       }
+      if (field.type === "number") {
+        return `
+          <div class="field">
+            <label for="${field.key}">${field.label}${requiredMark}</label>
+            <input id="${field.key}" data-key="${field.key}" type="number" value="${value}" placeholder="请输入${field.label}" />
+            ${renderHint(field, value)}
+            ${error ? `<div class="error">${error}</div>` : ""}
+          </div>
+        `;
+      }
       return `
         <div class="field">
           <label for="${field.key}">${field.label}${requiredMark}</label>
           <input id="${field.key}" data-key="${field.key}" value="${value}" placeholder="请输入${field.label}" />
-          ${field.key === "expectedSalary" ? `<div class="hint">${Number(value) > 30000 ? "需要 HRBP 特别审批" : "超过 30000 时会自动提示特别审批"}</div>` : ""}
+          ${renderHint(field, value)}
           ${error ? `<div class="error">${error}</div>` : ""}
         </div>
       `;
